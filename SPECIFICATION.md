@@ -413,12 +413,12 @@ Base set 𝔸 = {T, F, B, N} (Belnap bilattice) with two partial orders:
 
 ### B.2 Bit Encoding
 
-| Value | Binary | WHO | WHERE | WHEN |
-|-------|--------|-----|-------|------|
-| 10 | ME | EAST | SPRING |
-| 11 | WE | SOUTH | SUMMER |
-| 01 | YOU | WEST | AUTUMN |
-| 00 | THEY | NORTH | WINTER |
+| Binary | WHO  | WHERE | WHEN   |
+|--------|------|-------|--------|
+| 10     | ME   | EAST  | SPRING |
+| 11     | WE   | SOUTH | SUMMER |
+| 01     | YOU  | WEST  | AUTUMN |
+| 00     | THEY | NORTH | WINTER |
 
 ### B.3 Hexagram Encoding
 
