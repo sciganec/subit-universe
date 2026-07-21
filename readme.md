@@ -47,7 +47,7 @@ Using the SUBIT-TOPOS framework, we built an automated explorer for polynomial m
 - **Phase transition:** The relationship between local invertibility and global injectivity changes qualitatively as field characteristic varies.
 - **Morphodynamic signatures:** Each polynomial rule receives a signature Φ(ρ) = (Ω, entropy, information retention, cycle complexity, etc.), enabling clustering and anomaly detection.
 
-📂 **Lab:** `experiments/jacobian/` — see [`SUBIT-JACOBIAN_LAB_REPORT.md`](experiments/jacobian/REPORT.md) for full details.
+📂 **Lab:** `experiments/jacobian/` — see [`SUBIT-JACOBIAN_LAB_REPORT.md`](experiments/jacobian/jacobian_report.md) for full details.
 
 ### 2. Collatz Conjecture (Number Theory)
 
@@ -57,7 +57,7 @@ Instead of searching for counterexamples, we applied morphodynamic classificatio
 - **Phylogenetic tree** reveals evolutionary relationships between morphotypes, with a central attractor (M5, 23.5%) and an extreme regime (M3, 5.1%).
 - **Transition graph** shows that most trajectories flow through the central hub, with rare excursions into the extreme morphotype.
 
-📂 **Atlas:** `experiments/collatz/` — see [`COLLATZ_MORPHODYNAMIC_ATLAS.md`](experiments/collatz/REPORT.md) for the full analysis.
+📂 **Atlas:** `experiments/collatz/` — see [`COLLATZ_MORPHODYNAMIC_ATLAS.md`](experiments/collatz/collatz_report.md) for the full analysis.
 
 These experiments demonstrate that SUBIT-TOPOS is not a theorem prover, but a **morphodynamic discovery engine** that uncovers hidden structure in formal dynamical systems.
 
