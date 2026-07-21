@@ -1,7 +1,3 @@
-Ось **повний звіт** з усіма формулами, перетвореними на **чистий Unicode** (без LaTeX-обгорток). Він готовий до копіювання в текстовий файл, GitHub README або будь-який документ без підтримки MathJax.
-
----
-
 # SUBIT-JACOBIAN LAB: Experimental Report
 
 **Project:** SUBIT-TOPOS Dynamic Semantic Universe  
