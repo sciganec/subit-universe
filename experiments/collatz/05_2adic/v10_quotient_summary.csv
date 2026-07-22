@@ -1,0 +1,7 @@
+k,states,transitions,sccs,largest_scc,rank_decreasing,terminal_scc_found
+8,256,255,254,3,True,True
+9,512,511,487,24,True,True
+10,1024,1023,1022,3,True,True
+11,2048,2047,1984,63,True,True
+12,4096,4095,4033,62,True,True
+16,65536,65535,65534,3,True,True

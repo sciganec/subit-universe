@@ -1,0 +1,7 @@
+k,states,transitions,num_sccs,largest_scc,terminal_scc_found,terminal_scc_size,rank_found,rank_decreasing,build_time
+8,256,255,254,3,True,3,True,True,0.0007915496826171875
+9,512,511,487,24,True,3,True,True,0.001161813735961914
+10,1024,1023,1022,3,True,3,True,True,0.0023021697998046875
+11,2048,2047,1984,63,True,3,True,True,0.004373788833618164
+12,4096,4095,4033,62,True,3,True,True,0.008888721466064453
+16,65536,65535,65534,3,True,3,True,True,0.163466215133667
