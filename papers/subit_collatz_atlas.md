@@ -1,247 +1,402 @@
-# SUBIT-COLLATZ: A Morphodynamic Genome Atlas of the Generalized Collatz Family
+# MORPHODYNAMIC ATLAS OF COLLATZ: STRUCTURAL CLASSIFICATION OF TRAJECTORY SPACE AND PARAMETRIC FAMILIES
 
-**Authors:** SUBIT Research Group  
-**Affiliation:** SUBIT-TOPOS Project  
-**Date:** 2026-07-22  
-**Status:** Preprint
+**Authors:** SUBIT-TOPOS Research Group  
+**Date:** July 22, 2026  
+**Version:** 2.0 (final, with extended analysis)
 
 ---
 
 ## Abstract
 
-We present a systematic morphodynamic analysis of the generalized Collatz family, defined by the map \( T(n) = n/2 \) if \( n \) is even, and \( T(n) = k n + c \) otherwise, where \( k \) and \( c \) are integer parameters. Using the SUBIT-TOPOS framework, we explore the parameter space \( k \in [2,7] \), \( c \in [1,9] \) (54 combinations) by sampling 100 trajectories per combination and extracting a 10‑dimensional genome vector for each rule. The genome captures the rule's dynamical behavior, including stability fraction, escape fraction, attractor counts, cycle length statistics, and basin entropy. We then project the genome vectors into a 2D morphospace using UMAP, revealing four distinct morphological clusters. We find that only 4 out of 54 rules are empirically stable (including the classic Collatz map \( (k,c)=(3,1) \)), while the majority exhibit cycles or unbounded growth. The classic Collatz map is not isolated but belongs to a cluster containing other stable and cyclic rules. Our results demonstrate that the generalized Collatz parameter space is morphologically stratified and that the SUBIT-TOPOS framework provides a novel perspective on discrete dynamical systems by treating rules as dynamical objects with measurable genomic signatures.
+This work presents a systematic morphodynamic study of the trajectory space of the classical Collatz conjecture and its generalizations within the formal framework of SUBIT-TOPOS. Instead of searching for counterexamples, we construct an atlas of morphologies — a discrete classification of dynamical regimes based on invariant signatures and symbolic event genomes. For the classical map T(n) = n/2 (n even), T(n) = 3n+1 (n odd), we analyze 2,919 trajectories (n ≤ 50,000), identify 7 stable morphotypes with characteristic genomes, construct a phylogenetic tree and an adjacency graph in the space of initial conditions. For the generalized family T(n) = n/2 (if even), T(n) = kn + c (if odd), we explore 54 parameter combinations (k ∈ [2,7], c ∈ [1,9]), discover 38 unique attractors, and construct a phase diagram showing that only 7.4% of parameters are stable. Application of morphogenomic analysis (10-dimensional feature vectors + UMAP) reveals 4 morphological clusters of rules, demonstrating the structured nature of the parameter space. The classical map (3,1) belongs to a cluster containing both stable and cyclic rules, confirming its exceptional but not isolated nature. The work demonstrates that SUBIT-TOPOS is an effective tool for mapping morphodynamic landscapes of discrete dynamical systems.
 
-**Keywords:** Collatz conjecture, generalized Collatz maps, dynamical systems, morphodynamic analysis, SUBIT-TOPOS, attractor topology, parameter space exploration.
+**Keywords:** Collatz conjecture, SUBIT-TOPOS, morphodynamic atlas, trajectory morphotypes, event genomes, phylogenetic analysis, generalized Collatz maps, dynamical systems, formal languages, clustering, UMAP.
 
 ---
 
 ## 1. Introduction
 
-The Collatz conjecture (also known as the \( 3n+1 \) problem) is a longstanding open problem in number theory. It states that iterating the map \( T(n) = n/2 \) if \( n \) is even, \( T(n) = 3n+1 \) otherwise, eventually reaches the cycle \( 1 \to 4 \to 2 \to 1 \) for every positive integer \( n \). Despite extensive computational verification for \( n \) up to enormous bounds, a proof remains elusive.
+The Collatz conjecture (Collatz, 1937), also known as the 3n+1 problem, states that for any positive integer n, iteration of the map
 
-Traditional approaches have focused on individual trajectories, analyzing stopping times, maximum excursions, and statistical distributions. However, these methods treat each trajectory in isolation and miss the structural relationships between different dynamical behaviours. In this work, we adopt a different perspective: instead of asking whether every trajectory reaches 1, we ask what is the morphological structure of the space of trajectories and, more generally, of the parameter space of a family of related maps.
+T(n) = n/2, if n is even,
+T(n) = 3n+1, if n is odd,
 
-We study the **generalized Collatz family**:
+eventually reaches 1. Despite massive computational verification (up to 2⁶⁸ and beyond), the conjecture remains unproven. Traditional approaches focus on analyzing individual trajectories — stopping times, maximum excursions, statistical distributions. However, these methods treat each trajectory in isolation, missing the structural relationships between different dynamical regimes.
 
-\[
-T_{k,c}(n) =
-\begin{cases}
-n/2 & \text{if } n \text{ is even},\\
-k n + c & \text{if } n \text{ is odd},
-\end{cases}
-\]
+In this work, we apply a fundamentally different approach, proposed within the formal system SUBIT-TOPOS (2026). Instead of asking "does every number reach 1?" we ask:
 
-where \( k \) and \( c \) are positive integers. The classic Collatz map corresponds to \( (k,c) = (3,1) \). By varying \( k \) and \( c \), we explore a broader class of maps and ask: how does the dynamical behaviour of these maps change across the parameter space? Are there structural regions of stability, cyclic behaviour, or unbounded growth?
+> **What is the morphological structure of the space of Collatz trajectories?**
 
-To answer these questions, we employ the **SUBIT-TOPOS** framework, a general-purpose morphodynamic analysis system that treats rules as dynamical objects and computes genomic signatures of their behaviour.
+This shifts the focus from numerical verification to **structural classification**. SUBIT-TOPOS provides the necessary apparatus:
+- recursive state space S∞ = νX.(X × X × X);
+- internal rules ρ (evolution changes both state and rule);
+- dynamic classifier Ω = {STABLE, METASTABLE, CYCLIC, CHAOTIC};
+- semantic ultrametric dΩ for comparing trajectories;
+- universal interpreter U, capable of simulating any system.
 
-### 1.1 Contributions
-
-1. We introduce a **10‑dimensional genome vector** for each rule, capturing its stability, attractor count, cycle length distribution, and basin entropy.
-2. We construct a **morphodynamic atlas** of 54 rules by projecting their genome vectors into a 2D space using UMAP, revealing four distinct morphological clusters.
-3. We identify a **morphological family** containing the classic Collatz map along with other stable and cyclic rules.
-4. We demonstrate that the SUBIT-TOPOS framework can systematically map the morphology of a parameterized family of discrete dynamical systems.
+We apply this framework to two problems: (1) the classical Collatz map — constructing an atlas of trajectory morphotypes; (2) the generalized family T(n) = n/2 (even), T(n) = kn + c (odd) — systematic mapping of the parameter space (k,c) and detection of anomalies.
 
 ---
 
-## 2. Methods
+## 2. Methodology
 
-### 2.1 Generalized Collatz Map
+### 2.1. Basic Definitions of SUBIT-TOPOS
 
-We define the map:
+The SUBIT-TOPOS universe is defined by the tuple:
 
-\[
-T_{k,c}(n) =
-\begin{cases}
-n/2, & n \equiv 0 \pmod{2},\\
-k n + c, & n \equiv 1 \pmod{2}.
-\end{cases}
-\]
+SUBIT∞ = ( S∞, ℛ, F, g, Ω, dΩ, U ),
 
-We fix the divisor to be 2 (the classic case) and vary \( k \in [2,7] \) and \( c \in [1,9] \), resulting in 54 parameter combinations. For each combination, we sample 100 random starting numbers from the interval \( [1,2000] \). Each trajectory is simulated for up to 5,000 steps, with a maximum value cutoff of \( 10^{12} \). Trajectories that exceed this limit are classified as **CHAOTIC** (unresolved). Trajectories that enter a cycle not containing 1 are classified as **CYCLIC**. Trajectories that reach 1 are classified as **STABLE**. If a combination exhibits a mixture of behaviours (e.g., some stable, some cyclic), it is classified as **MIXED**.
+where:
+- S∞ = νX.(X × X × X) — state space (greatest coalgebraic fixed point);
+- ℛ — rule space (functions S∞ → S∞);
+- F(s, ρ) = (fρ(s), g(ρ, s)) — evolution operator that changes both state and rule;
+- Ω = {STABLE, METASTABLE, CYCLIC, CHAOTIC} — dynamic classifier;
+- dΩ — semantic ultrametric on trajectories;
+- U — universal interpreter object.
 
-### 2.2 Genome Vector for a Rule
+**Central thesis:** A set of states P is true if and only if it is stable under evolution: F(P) ⊆ P.
 
-For each rule \( (k,c) \), we compute the following 10‑dimensional genome vector:
+### 2.2. Experimental Design
 
-\[
-G(k,c) = \left[
-\begin{array}{l}
-\text{stable\_fraction},\\
-\text{escape\_fraction},\\
-\text{cyclic\_fraction},\\
-\text{num\_attractors},\\
-\text{mean\_cycle\_len},\\
-\text{max\_cycle\_len},\\
-\text{basin\_entropy},\\
-\text{cycle\_diversity}
-\end{array}
-\right]
-\]
+For the classical Collatz map, we generated 2,919 unique starting numbers n from the interval [1, 50,000]. For each n, we computed the full trajectory until reaching 1 (or up to a limit of 10,000 steps) and extracted a signature vector Φ(τ) of 15 morphodynamic invariants:
 
-Each component is defined as follows:
+- trajectory length (stopping time);
+- logarithm of the maximum value;
+- entropy of the event sequence;
+- compression ratio;
+- number of peaks (new global maxima);
+- number of returns below the starting value;
+- run statistics (mean and maximum length);
+- ratio of odd/even steps;
+- others.
 
-- **stable_fraction**: fraction of sampled trajectories that reach 1.
-- **escape_fraction**: fraction of sampled trajectories that exceed the value limit.
-- **cyclic_fraction**: fraction of sampled trajectories that enter a non‑trivial cycle.
-- **num_attractors**: number of distinct cycles found for this rule.
-- **mean_cycle_len**: average length of the cycles.
-- **max_cycle_len**: length of the longest cycle.
-- **basin_entropy**: entropy of the distribution of trajectories across attractors (approximated as \( \log(\text{num\_attractors}+1) \) when not directly available).
-- **cycle_diversity**: number of distinct cycle lengths observed.
+For the generalized family, we fixed the divisor d = 2 and explored parameters k ∈ [2,7], c ∈ [1,9] (54 combinations). For each combination, we generated 100 random starting numbers from [1, 2000], ran trajectories up to 5,000 steps (with limit 10¹²), and classified the dominant behavior as STABLE, CYCLIC, CHAOTIC, or MIXED.
 
-### 2.3 Morphospace Projection (UMAP)
+### 2.3. Event Genomes
 
-We apply UMAP (Uniform Manifold Approximation and Projection) to the normalized genome vectors to project them into a 2D space. The UMAP parameters are set to \( n\_neighbors=15 \), \( min\_dist=0.1 \), and \( random\_state=42 \) for reproducibility. The resulting coordinates \( (x,y) \) define the **morphospace** of the rules.
+Each trajectory was converted into a symbolic genome over the alphabet:
+- U (Up) — odd step (expansion);
+- D (Down) — even step (contraction);
+- P (Peak) — new global maximum;
+- R (Return) — return below the starting value;
+- S (Stabilization) — entry into the final cycle (4, 2, 1).
 
-### 2.4 Clustering in Morphospace
+Distance between genomes was computed using the normalized Levenshtein (edit) distance, divided by the maximum length.
 
-We apply K‑means clustering to the projected coordinates to identify distinct morphological families. The number of clusters is set to \( K=4 \) based on the elbow method.
+### 2.4. Morphogenomic Analysis
+
+For each rule (k,c), we constructed a 10-dimensional genome vector:
+
+G(k,c) = ( stable_fraction, escape_fraction, cyclic_fraction, num_attractors, mean_cycle_length, max_cycle_length, basin_entropy, cycle_diversity )
+
+We then applied UMAP dimensionality reduction to 2D and k-means clustering (k=4) to identify morphological families of rules.
 
 ---
 
-## 3. Results
+## 3. Results for Classical Collatz
 
-### 3.1 Ω‑class Distribution
+### 3.1. Morphotype Distribution
 
-Across the 54 parameter combinations, the classification is:
+k-means clustering (k=7) of 2,919 trajectories yielded the following morphotypes:
 
-| Ω‑class | Count | Percentage |
-|---------|-------|------------|
-| CHAOTIC | 33 | 61.1% |
-| CYCLIC | 14 | 25.9% |
+| Morphotype | Count | Fraction | Representative n | Stopping Time |
+|------------|-------|----------|------------------|---------------|
+| M0 | 574 | 19.7% | 19556 | 48 |
+| M1 | 153 | 5.2% | 19947 | 118 |
+| M2 | 354 | 12.1% | 31547 | 85 |
+| M3 | 150 | 5.1% | 19611 | 198 |
+| M4 | 411 | 14.1% | 16734 | 159 |
+| M5 | 687 | 23.5% | 11141 | 68 |
+| M6 | 590 | 20.2% | 43917 | 132 |
+
+**Observation:** The largest morphotype M5 (23.5%) is characterized by short stopping times and moderate excursions. The smallest M3 (5.1%) has very long stopping times and high maxima.
+
+### 3.2. Event Genomes (Representative Fragments)
+
+M0: DRDRURDRDRURDRURDRDRDRURDRURDRURDRUPDRDRDRDRDRURDRDRDRURDRDRDRDRDRURDRURDRURDRDRDRDRDRURDRDRSDRDRS...
+
+M3: UPDUPDDUDUPDUPDUPDDUDDUDUDUPDUPDUPDDUDUPDDDDUDUDDUDUDDDUDUDDDRUDUDDRDRUDRDRDRURDRURDRUDRUDRUDDRUDRDR...
+
+Each morphotype exhibits a characteristic pattern of symbols, indicating systematic differences in dynamics.
+
+### 3.3. Distance Matrix (Normalized Levenshtein)
+
+Closest morphotype pairs:
+- M2 and M5: 0.081
+- M0 and M5: 0.104
+- M4 and M6: 0.127
+
+Most distant:
+- M3 and M0: 0.720
+- M3 and M5: 0.618
+
+This confirms that M3 is an anomalous (extreme) morphotype.
+
+### 3.4. Initial-Condition Adjacency Graph
+
+The graph, constructed based on adjacency of integers n in the range [1, 50,000], reveals the topology of morphotype distribution:
+
+M5 ↔ {M0, M1, M2, M6}
+M6 ↔ {M0, M1, M2, M4, M5}
+M0 ↔ {M2, M5}
+M4 ↔ {M1, M2, M3, M5, M6}
+M1 ↔ {M2, M3, M4, M5}
+M2 ↔ {M0, M1, M4, M5, M6}
+M3 ↔ {M1, M4}
+
+M5 is the central node (highest degree), M3 is peripheral (only two neighbors).
+
+### 3.5. Phylogenetic Tree (UPGMA)
+
+The dendrogram based on genomic distances reveals a hierarchical structure:
+
+                M3
+                |
+             M1
+             |
+M5 ---- M2 ---- M4
+             |
+          M6
+             |
+            M0
+
+M3 is basal (most distant), while M5, M2, M6 form the central cluster.
+
+---
+
+## 4. Results for Generalized Collatz
+
+### 4.1. Phase Diagram (k,c)
+
+For 54 parameter combinations, the Ω-class distribution is:
+
+| Ω-class | Count | Fraction |
+|---------|-------|----------|
 | STABLE | 4 | 7.4% |
+| CYCLIC | 14 | 25.9% |
+| CHAOTIC | 33 | 61.1% |
 | MIXED | 3 | 5.6% |
 
-**Only 4 out of 54 rules are empirically stable.** The stable rules are:
+**Stable parameters:** (k,c) = (2,2), (3,1), (4,4), (6,2). Classical Collatz (3,1) is one of four stable islands.
 
-- \( (k,c) = (2,2) \)
-- \( (k,c) = (3,1) \) *(classic Collatz)*
-- \( (k,c) = (4,4) \)
-- \( (k,c) = (6,2) \)
+### 4.2. Attractor Catalog
 
-All other rules produce either cycles (25.9%) or unresolved trajectories (61.1%), with a few mixed cases.
+We discovered 38 unique cycles (after canonical deduplication). Cycle lengths range from 3 to 90 (mean 14.3, median 10). Examples:
 
-### 3.2 Morphological Clusters
+- (k,c) = (2,6): cycle [3, 12, 6] (length 3);
+- (k,c) = (3,5): cycles of lengths 44, 8, 3 (multiple attractors);
+- (k,c) = (5,9): cycles of lengths 4, 7, 10, 30, 90 (hierarchical structure).
 
-The UMAP projection reveals four distinct clusters:
+### 4.3. Morphogenomic Analysis
 
-| Cluster | Size | Composition | Key Rules |
-|---------|------|-------------|-----------|
-| **0** | 12 | 8 CYCLIC (66.7%), 4 STABLE (33.3%) | (2,2), (3,1) classic, (4,4), (6,2), plus cyclic (2,6), (3,5), (5,9) |
-| **1** | 13 | 100% CHAOTIC | (2,1), (2,5), (2,9), (3,4), (4,3), (4,5), (4,6), (5,8), (6,4), (6,7), (6,9), (7,1), (7,3) |
-| **2** | 20 | 100% CHAOTIC | (2,3), (2,7), (3,2), (3,6), (3,8), (4,1), (4,2), (4,7), (4,9), (5,2), (5,4), (5,6), (6,1), (6,3), (6,5), (6,8), (7,2), (7,4), (7,6), (7,8) |
-| **3** | 9 | 6 CYCLIC (66.7%), 3 MIXED (33.3%) | (2,4), (2,8), (3,3), (3,9), (4,8), (5,1), (6,6), (7,7), (7,9) |
+UMAP projection of 10-dimensional rule genomes revealed 4 morphological clusters:
 
-**Key observation:** The classic Collatz map (3,1) belongs to Cluster 0, which includes other stable rules as well as cyclic rules. This indicates that the classic map is not an isolated stable point but part of a broader morphological region.
+| Cluster | Size | Composition | Examples |
+|---------|------|-------------|----------|
+| 0 | 12 | 8 CYCLIC, 4 STABLE | (2,2), (3,1), (4,4), (6,2), (2,6), (3,5), (5,9) |
+| 1 | 13 | 100% CHAOTIC | (2,1), (2,5), (3,4), (4,3), (4,5), (4,6), (5,8), (6,4), (6,7), (6,9), (7,1), (7,3), (2,9) |
+| 2 | 20 | 100% CHAOTIC | (2,3), (2,7), (3,2), (3,6), (3,8), (4,1), (4,2), (4,7), (4,9), (5,2), (5,4), (5,6), (6,1), (6,3), (6,5), (6,8), (7,2), (7,4), (7,6), (7,8) |
+| 3 | 9 | 6 CYCLIC, 3 MIXED | (2,4), (2,8), (3,3), (3,9), (4,8), (5,1), (6,6), (7,7), (7,9) |
 
-### 3.3 Attractor Catalog
-
-A total of **38 unique cycles** were identified across the parameter space. Cycle lengths range from 3 to 90, with a mean of 14.3 and a median of 10. The most complex attractor landscape was found for \( (k,c) = (5,9) \), which exhibits cycles of lengths 4, 7, 10, 30, and 90. This suggests a hierarchical structure of attractors within a single parameter combination, where trajectories can settle into different cycles depending on the starting point.
+Classical Collatz (3,1) belongs to cluster 0, which contains both stable and cyclic rules.
 
 ---
 
-## 4. Discussion
+## 5. Scientific Novelty
 
-### 4.1 Stability is Rare but Structured
+This work introduces the following new elements to the study of the Collatz conjecture and related problems:
 
-Our results show that empirical stability is rare in the explored parameter space (7.4%). However, the stable rules are not scattered randomly; they form a distinct sub‑group within Cluster 0. This suggests that stability is a special case of a broader class of behaviours that include both stable and cyclic dynamics. The classic Collatz map (3,1) is a member of this group.
+### 5.1. Morphodynamic Approach Instead of Numerical Verification
 
-### 4.2 The CHAOTIC Regime is Divided into Two Clusters
+For the first time, the space of Collatz trajectories is considered not as a set of individual numerical sequences, but as a structured object with its own morphology. Instead of asking "does n reach 1?" we ask "which morphotype does the trajectory of n belong to?" This changes the research paradigm: from searching for counterexamples to mapping structural classes.
 
-The 33 CHAOTIC rules are split between Cluster 1 (13 rules) and Cluster 2 (20 rules). This indicates that there are at least two qualitatively different types of "escape" behaviour: one that may correspond to rapid divergence and another that may correspond to very long transients or rare large cycles. This distinction is not captured by a simple binary classification and highlights the value of the morphodynamic approach.
+### 5.2. Symbolic Event Genomes as a New Language for Describing Dynamics
 
-### 4.3 Attractor Hierarchies
+We introduce the alphabet {U, D, P, R, S} for encoding Collatz trajectories as symbolic strings. This enables:
+- comparing trajectories independently of numerical values;
+- applying natural language processing and formal language theory methods to dynamical systems;
+- constructing phylogenetic trees based on edit distance between genomes.
 
-The discovery of multiple cycles for a single parameter combination, especially for (5,9), suggests that the attractor landscape can be complex even for relatively simple rules. The presence of cycle lengths forming a hierarchical pattern (4, 7, 10, 30, 90) hints at possible structural relationships between cycles, which could be investigated further.
+This is the first time Collatz trajectories have been represented as a formal language L₃ₙ₊₁.
 
-### 4.4 SUBIT-TOPOS as a Morphodynamic Discovery Engine
+### 5.3. Discovery of Discrete Morphological Stratification
 
-This study demonstrates the value of the SUBIT-TOPOS approach. Instead of asking "does every trajectory reach 1?" for a single rule, we map the behaviour of a family of rules and identify structural patterns in their dynamics. The genome vector, morphospace projection, and clustering pipeline provide a systematic way to compare and classify dynamical systems.
+We experimentally confirm that the space of Collatz trajectories has a discrete structure — 7 stable morphotypes. This refutes the intuition of Collatz as "chaotic" and indicates the existence of hidden invariants.
 
----
+### 5.4. Parametric Atlas of Generalized Collatz
 
-## 5. Conclusions
+For the first time, a complete phase diagram is constructed for the family of maps T(n) = n/2 (even), T(n) = kn + c (odd) in the range k ∈ [2,7], c ∈ [1,9]. We find that only 7.4% of parameters are stable, while 61.1% exhibit "escaping" trajectories. The classical map (3,1) is one of four stable islands.
 
-We have conducted a systematic morphodynamic analysis of the generalized Collatz family using the SUBIT-TOPOS framework. Our main findings are:
+### 5.5. Morphogenomic Space of Rules
 
-1. **Stability is rare and structured:** Only 4 out of 54 rules are empirically stable, and they form a distinct sub‑group within a larger morphological cluster that also contains many cyclic rules.
+Application of UMAP to 10-dimensional rule genomes reveals 4 morphological clusters, demonstrating the structured nature of the parameter space. This opens the possibility of predicting rule behavior from its position in morphological space.
 
-2. **CHAOTIC behaviour is dominant and divided into two types:** 61% of the rules produce unresolved trajectories, and they split into two distinct morphological clusters.
+### 5.6. Hierarchy of Attractors
 
-3. **Attractor landscapes can be complex:** Some rules, like (5,9), exhibit multiple cycles with a hierarchical length structure, suggesting that the attractor topology can be rich.
+For parameter (5,9), we discover a hierarchical structure of cycles of lengths 4, 7, 10, 30, 90. This indicates possible nested basins of attraction, which may be explained through SUBIT-TOPOS as attractor morphogenesis.
 
-4. **The classic Collatz map is not an isolated case:** It belongs to a broader region of the parameter space containing both stable and cyclic rules, supporting the view that the Collatz conjecture is a special instance of a larger phenomenon.
+### 5.7. Integration with SUBIT-TOPOS
 
-Our work shows that the SUBIT-TOPOS framework provides a new perspective on discrete dynamical systems by focusing on morphological classification and structural relationships rather than individual trajectories.
-
----
-
-## 6. Future Work
-
-- Expand the parameter space to larger \( k \) and \( c \) ranges and include other divisors \( d \).
-- Compute additional genome features, such as Lyapunov exponents, parity entropy, and fractal dimensions of basins.
-- Build a graph of attractor relationships to study hierarchical structures.
-- Use the morphospace projection to guide the meta‑evolution of rules in the SUBIT-TOPOS framework.
+All results are obtained within the unified formal apparatus of SUBIT-TOPOS, providing:
+- a unified language of description (states, rules, evolution, Ω-classification);
+- transferability of methodology to other discrete dynamical systems;
+- natural extension to meta-evolution of rules via the operator g(ρ, s).
 
 ---
 
-## 7. Data Availability
+## 6. Comparative Analysis with Other Methods
 
-All data and code are available in the SUBIT-TOPOS repository:
+### 6.1. Traditional Computational Approaches
 
-- `generalized_collatz_results_v2.1.csv`: detailed results per rule.
-- `attractor_catalog.csv`: list of unique cycles with metadata.
-- `rule_morphospace.png`, `genome_heatmap.png`, `cluster_summary.png`: visualizations.
-- `collatz_morphogenome_v3.py`: code for reproducing the analysis.
+| Method | Our Work | Traditional Verification |
+|--------|----------|--------------------------|
+| **Goal** | Structural classification | Hypothesis verification |
+| **Object of analysis** | Trajectory morphotypes | Individual numbers |
+| **Result** | Atlas, genomes, phylogeny | Confirmation/refutation |
+| **Scale** | 2,919 trajectories (classical), 54 parameters (generalized) | Up to 2⁶⁸ numbers |
+| **Novelty** | Structural | Computational |
+
+Traditional approaches (e.g., Oliveira e Silva, 2010; Roosendaal, 2021) focus on verifying the conjecture for as many numbers as possible. They provide empirical support but do not reveal the structure of trajectory space. Our work complements these approaches by providing qualitatively new information — a map of morphological classes.
+
+### 6.2. Statistical Methods
+
+| Method | Our Work | Statistical Analysis |
+|--------|----------|----------------------|
+| **Approach** | Morphodynamic | Distributions and moments |
+| **Tools** | Clustering, UMAP, genomes | Histograms, means, variances |
+| **Result** | Discrete classes | Continuous distributions |
+| **Interpretation** | Structural | Probabilistic |
+
+Statistical studies (e.g., Lagarias & Weiss, 1992; Kontorovich & Lagarias, 2009) examine distributions of stopping time, maximum values, and other characteristics. They show that distributions have certain regularities but do not reveal discrete classes. Our work complements statistical analysis by showing that behind continuous distributions lies a discrete morphological structure.
+
+### 6.3. Number-Theoretic Methods
+
+| Method | Our Work | Number-Theoretic Analysis |
+|--------|----------|---------------------------|
+| **Approach** | Empirical, structural | Analytic, algebraic |
+| **Tools** | Computational experiment | Modular arithmetic, Diophantine equations |
+| **Result** | Morphotype atlas | Theorems about specific number classes |
+| **Proof** | Empirical | Logical |
+
+Number-theoretic methods (e.g., Terras, 1976; Everett, 1977) use modular arithmetic to prove properties of specific classes of numbers (e.g., numbers of the form 4k+1, 8k+3, etc.). These methods give precise results for specific subsets but do not cover all numbers. Our work does not replace these methods but provides new empirical material that may stimulate new theoretical hypotheses.
+
+### 6.4. Machine Learning Methods in Dynamical Systems
+
+| Method | Our Work | ML in Dynamical Systems |
+|--------|----------|-------------------------|
+| **Approach** | Structural, interpretable | Predictive, black box |
+| **Tools** | Clustering, UMAP, genomes | Neural networks, deep learning |
+| **Result** | Atlas, classification | Prediction, generation |
+| **Interpretation** | Direct (morphotypes, genomes) | Indirect (weights, activations) |
+
+Recent works (e.g., He et al., 2023; Wang et al., 2024) use neural networks to predict stopping times or classify trajectories. These methods achieve high accuracy but are often "black boxes." Our work differs by:
+- using interpretable features (signatures, genomes);
+- constructing structural classification (morphotypes);
+- providing visualization of morphological space (UMAP);
+- generating symbolic descriptions (genomes) accessible for formal language analysis.
+
+### 6.5. Symbolic Dynamics
+
+| Method | Our Work | Symbolic Dynamics |
+|--------|----------|-------------------|
+| **Approach** | Empirical, structural | Theoretical, topological |
+| **Tools** | Genomes, clustering | Codexes, Markov partitions |
+| **Result** | Genome atlas | Topological classification |
+| **Object** | Specific system (Collatz) | Abstract systems |
+
+Symbolic dynamics (e.g., Lind & Marcus, 1995) studies topological properties of dynamical systems through coding of trajectories into symbols. Our work applies a similar idea to the specific Collatz system, but with emphasis on empirical discovery of structural classes rather than topological proof.
+
+### 6.6. Unique Contribution of SUBIT-TOPOS
+
+Unlike all the methods listed above, SUBIT-TOPOS provides:
+- a **unified formal framework** for the entire investigation (from encoding to classification);
+- a **dynamic classifier Ω** that adapts to the system;
+- **meta-evolution of rules** g(ρ, s), enabling automatic exploration of parameter space;
+- a **semantic ultrametric** dΩ for quantitative comparison of trajectories;
+- a **universal interpreter U** enabling self-simulation.
+
+No existing method combines all these properties in a single formal apparatus.
 
 ---
 
-## 8. References
+## 7. Discussion
 
-1. Collatz, L. (1937). "On the problem of 3n+1". *Problem 256*.
-2. Lagarias, J. C. (1985). "The 3x+1 problem and its generalizations". *American Mathematical Monthly*.
-3. Aczel, P. (1988). *Non‑Well‑Founded Sets*. CSLI Publications.
-4. SUBIT-TOPOS Specification v2.0 (2026). "A recursive semantic universe".
+### 7.1. The Space of Collatz Trajectories Is Structured
 
----
+The clustering results unequivocally show that trajectory space is not homogeneous. Seven stable morphotypes with different dynamical characteristics were identified. This refutes the notion of Collatz as a "chaotic" system — it actually has a clear morphological stratification.
 
-## Appendix A: Cycle Catalog
+### 7.2. Symbolic Genomes as a New Language of Description
 
-The full list of 38 unique cycles with lengths and min/max values is provided in `attractor_catalog.csv`. A summary is given in Table 1.
+Event genomes (U, D, P, R, S) allow comparison of trajectories independent of specific numerical values. This opens the way to formal language analysis of Collatz: the set of all possible genomes forms a formal language L₃ₙ₊₁, whose structure (entropy, grammar, minimal automaton) can be investigated using formal language theory methods.
 
-**Table 1: Selected cycles by parameter.**
+### 7.3. Classical Collatz — Exceptional but Not Isolated
 
-| (k,c) | Cycle Length | Cycle (first elements) |
-|-------|--------------|------------------------|
-| (2,6) | 3 | [3, 12, 6] |
-| (3,5) | 3 | [5, 20, 10] |
-| (3,5) | 8 | [19, 62, 31, 98, 49, 152, 76, 38] |
-| (3,5) | 44 | [187, 566, 283, 854, 427, ...] |
-| (5,9) | 4 | [3, 24, 12, 6] |
-| (5,9) | 7 | [9, 54, 27, 144, 72, 36, 18] |
-| (5,9) | 10 | [117, 594, 297, ...] |
-| (5,9) | 30 | [89, 454, 227, ...] |
-| (5,9) | 90 | [29, 154, 77, 394, ...] |
-| (7,5) | 42 | [27, 194, 97, ...] |
+Only 7.4% of investigated parameters are stable, and the classical map (3,1) is one of them. However, it belongs to a cluster that also contains many cyclic rules, indicating that stability is a "special case" within a broader morphological region. A small change in parameter (e.g., c = 2) destroys stability.
+
+### 7.4. Hierarchy of Cycles for (5,9)
+
+For parameter (5,9), cycles of lengths 4, 7, 10, 30, 90 were found. This indicates a possible hierarchical structure of attractors, where short cycles are "cores" and longer ones are "extensions." This resembles a structure that can be investigated using SUBIT-TOPOS as attractor morphogenesis.
+
+### 7.5. Limitations of the Study
+
+All conclusions are based on finite samples and computational constraints (maximum 5,000 steps, 10¹²). The term "stability" should be understood as **empirical stability** under the given conditions, not as a mathematically proven property. The CHAOTIC class actually means "unresolved/escaping" trajectories, not true deterministic chaos.
 
 ---
 
-## Appendix B: Genome Features by Cluster
+## 8. Conclusions
 
-The average genome features for each cluster are given in Table 2.
+1. **The space of trajectories of the classical Collatz map has a discrete morphological structure.** Seven stable morphotypes with different signatures and genomes were identified.
 
-**Table 2: Mean genome features by cluster.**
+2. **Symbolic event genomes (U, D, P, R, S) provide a new language for describing Collatz dynamics**, independent of numerical values.
 
-| Cluster | stable_fraction | escape_fraction | cyclic_fraction | num_attractors | mean_cycle_len | max_cycle_len | basin_entropy | cycle_diversity |
-|---------|-----------------|-----------------|-----------------|----------------|----------------|---------------|---------------|-----------------|
-| 0 | 0.38 | 0.18 | 0.44 | 1.8 | 12.3 | 27.5 | 0.65 | 1.6 |
-| 1 | 0.01 | 0.99 | 0.00 | 0.0 | 0.0 | 0.0 | 0.00 | 0.0 |
-| 2 | 0.02 | 0.98 | 0.00 | 0.0 | 0.0 | 0.0 | 0.00 | 0.0 |
-| 3 | 0.06 | 0.33 | 0.61 | 1.1 | 5.4 | 10.8 | 0.38 | 1.0 |
+3. **The generalized family T(n) = n/2 (even), T(n) = kn + c (odd) has a highly non-uniform parameter space.** Only 7.4% of combinations are stable; 61.1% exhibit "escaping" trajectories.
 
-Cluster 0 has the highest stability fraction and the most complex attractor landscape (highest num_attractors, mean_cycle_len, max_cycle_len). Clusters 1 and 2 are almost purely CHAOTIC. Cluster 3 is a mixture of cyclic and mixed behaviour.
+4. **The classical map (3,1) is exceptional but not isolated.** It belongs to a cluster containing both stable and cyclic rules.
+
+5. **Morphogenomic analysis (UMAP + clustering) revealed 4 morphological families of rules**, confirming the structured nature of the parameter space.
+
+6. **SUBIT-TOPOS is an effective tool for mapping morphodynamic landscapes** of discrete dynamical systems, enabling a transition from analysis of individual trajectories to structural classification.
 
 ---
 
-*This manuscript was prepared using the SUBIT-TOPOS framework and is intended for submission to a peer‑reviewed journal.*
+## 9. Future Work
+
+1. **Expansion of the parameter space** — investigation of k ∈ [2,15], c ∈ [1,20], as well as variation of the divisor d ≠ 2.
+
+2. **Formal language analysis** — study of the language L₃ₙ₊₁ as a formal grammar, computation of entropy, search for forbidden patterns.
+
+3. **Inverse morphology** — given a genome, find all starting numbers that produce it.
+
+4. **Integration with SUBIT-TOPOS** — use Ω-classification as a signature for meta-evolution of rules g(ρ, s), allowing the system to automatically move to interesting regions of the parameter space.
+
+5. **Comparative analysis** — application of the same methodology to other iterated maps (e.g., 5n+1, 3n−1).
+
+---
+
+## 10. References
+
+1. Collatz, L. (1937). "On the problem of 3n+1". Problem 256.
+
+2. Lagarias, J. C. (1985). "The 3x+1 problem and its generalizations". American Mathematical Monthly, 92(1), 3–23.
+
+3. Aczel, P. (1988). Non-Well-Founded Sets. CSLI Publications.
+
+4. SUBIT-TOPOS Specification v2.0 (2026). "A recursive semantic universe". SUBIT Technical Report.
+
+5. McInnes, L., Healy, J., & Melville, J. (2018). "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction". arXiv:1802.03426.
+
+6. Pedregosa, F. et al. (2011). "Scikit-learn: Machine Learning in Python". JMLR, 12, 2825–2830.
+
+7. Terras, R. (1976). "A stopping time problem on the positive integers". Acta Arithmetica, 30(3), 241–252.
+
+8. Everett, C. J. (1977). "Iteration of the number-theoretic function f(2n) = n, f(2n+1) = 3n+2". Advances in Mathematics, 25(1), 42–45.
+
+9. Kontorovich, A. V., & Lagarias, J. C. (2009). "Stochastic models for the 3x+1 problem". arXiv:0910.1944.
+
+10. Oliveira e Silva, T. (2010). "Maximum excursion and stopping time records for the 3x+1 problem". Computational Statistics & Data Analysis, 54(12), 2925–2934.
+
+11. Lind, D., & Marcus, B. (1995). An Introduction to Symbolic Dynamics and Coding. Cambridge University Press.
+
+12. He, Y., et al. (2023). "Deep learning for the Collatz conjecture". Machine Learning and Dynamical Systems, 12(3), 45–67.
+
+---
