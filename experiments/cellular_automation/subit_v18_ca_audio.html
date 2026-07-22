@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUBIT v18: Active Rule Ecology + Audio</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --panel: #141414;
+      --panel2: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #e0e0e0;
+      --muted: #888;
+      --accent: #2a5;
+      --accent-hov: #3b7;
+      --danger: #a33;
+      --danger-hov: #c44;
+      --stable: #5f5;
+      --cyclic: #ff5;
+      --chaotic: #f55;
+      --meta: #aaf;
+      --audio: #f0a;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      gap: 1rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: -0.5rem;
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .canvas-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--panel);
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+
+    .canvas-group:hover { transform: translateY(-2px); }
+
+    .canvas-group span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    canvas {
+      border: 1px solid var(--border);
+      background: #000;
+      image-rendering: pixelated;
+      border-radius: 4px;
+      max-width: 100%;
+    }
+
+    #mainCanvas { width: 100%; max-width: 400px; }
+    #ruleCanvas, #deltaCanvas { width: 100%; max-width: 200px; }
+    #transCanvas { width: 100%; max-width: 256px; }
+
+    .panel {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      background: var(--panel);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    button:hover { background: var(--accent-hov); transform: scale(1.03); }
+    button:active { transform: scale(0.97); }
+    button.reset { background: var(--danger); }
+    button.reset:hover { background: var(--danger-hov); }
+    button.secondary { background: #444; }
+    button.secondary:hover { background: #555; }
+    button.audio-btn {
+      background: linear-gradient(135deg, #2a5, #f0a);
+      position: relative;
+      overflow: hidden;
+    }
+    button.audio-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 2s infinite;
+    }
+    button.audio-btn:hover { filter: brightness(1.2); }
+    button.audio-btn.active {
+      background: linear-gradient(135deg, #f0a, #a33);
+      animation: pulse 1s infinite;
+    }
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(240,10,170,0.5); }
+      50% { box-shadow: 0 0 20px rgba(240,10,170,0.8); }
+    }
+
+    .metric {
+      background: #1a1a1a;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .metric .label { color: var(--muted); }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card h3 {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid #222;
+    }
+
+    .metric-row:last-child { border-bottom: none; }
+
+    table {
+      border-collapse: collapse;
+      background: #111;
+      font-size: 0.8rem;
+      width: 100%;
+      font-family: monospace;
+    }
+
+    th, td {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid #2a2a2a;
+      text-align: center;
+    }
+
+    th {
+      background: #1e1e1e;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover td { background: #1a1a1a; }
+
+    .omega-badge {
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+    }
+
+    .omega-stable { color: var(--stable); background: rgba(85,255,85,0.1); }
+    .omega-cyclic { color: var(--cyclic); background: rgba(255,255,85,0.1); }
+    .omega-chaotic { color: var(--chaotic); background: rgba(255,85,85,0.1); }
+    .omega-meta { color: var(--meta); background: rgba(170,170,255,0.1); }
+
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    @media (max-width: 768px) {
+      .bottom-row { grid-template-columns: 1fr; }
+      .main-container { grid-template-columns: 1fr 1fr; }
+      .controls-grid { grid-template-columns: 1fr !important; }
+      .audio-grid { grid-template-columns: 1fr !important; }
+    }
+
+    .tooltip {
+      position: relative;
+      cursor: help;
+    }
+
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #ddd;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      border: 1px solid #444;
+      z-index: 10;
+    }
+
+    .tooltip:hover::after { opacity: 1; }
+
+    .fps-counter {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-family: monospace;
+    }
+
+    /* ===== CONTROLS PANEL ===== */
+    .controls-panel, .audio-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      width: 100%;
+      max-width: 1200px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls-panel h3, .audio-panel h3 {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .controls-grid, .audio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .control-group label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-group label .value {
+      color: var(--text);
+      font-family: monospace;
+      background: #1a1a1a;
+      padding: 0 0.4rem;
+      border-radius: 3px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: #2a2a2a;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      background: var(--accent-hov);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    .audio-group input[type="range"]::-webkit-slider-thumb {
+      background: var(--audio);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .phase-info {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      font-family: monospace;
+    }
+
+    .phase-legend {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.7rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .phase-legend span {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-stable { background: var(--stable); }
+    .dot-cyclic { background: var(--cyclic); }
+    .dot-chaotic { background: var(--chaotic); }
+    .dot-meta { background: var(--meta); }
+
+    /* Audio visualizer */
+    #audioCanvas {
+      width: 100%;
+      max-width: 500px;
+      height: 80px;
+      background: #000;
+      border-radius: 4px;
+    }
+
+    .audio-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .audio-status .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #333;
+      transition: background 0.3s;
+    }
+
+    .audio-status .indicator.active {
+      background: var(--audio);
+      box-shadow: 0 0 8px var(--audio);
+      animation: blink 0.5s infinite alternate;
+    }
+
+    @keyframes blink {
+      from { opacity: 0.5; }
+      to { opacity: 1; }
+    }
+
+    select {
+      background: #1a1a1a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.6rem;
+      font-family: var(--font);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>🜂 SUBIT v18</h1>
+  <p class="subtitle">Active Rule Ecology + Sonification — Слухай еволюцію</p>
+
+  <div class="main-container">
+    <div class="canvas-group">
+      <span>Фізичний простір <span class="tooltip" data-tip="Колір = правило (0-255)">ⓘ</span></span>
+      <canvas id="mainCanvas" width="400" height="400"></canvas>
+    </div>
+    <div class="canvas-group">
+      <span>Простір правил</span>
+      <canvas id="ruleCanvas" width="200" height="200"></canvas>
+    </div>
+    <div class="canvas-group">
+      <span>Карта змін (Δrule)</span>
+      <canvas id="deltaCanvas" width="200" height="200"></canvas>
+    </div>
+    <div class="canvas-group">
+      <span>Накопичений граф переходів</span>
+      <canvas id="transCanvas" width="256" height="256"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button id="playBtn" aria-label="Пауза/Старт">⏸ Пауза</button>
+    <button class="reset" id="resetBtn" aria-label="Новий всесвіт">↺ Новий всесвіт</button>
+    <button class="secondary" id="stepBtn" aria-label="Один крок">⏭ Крок</button>
+    <button class="audio-btn" id="audioBtn" aria-label="Увімкнути аудіо">🔊 Аудіо OFF</button>
+    <span class="metric tooltip" data-tip="Кількість живих клітин">
+      <span class="label">Живих:</span> <span id="pop">0</span>
+    </span>
+    <span class="metric tooltip" data-tip="Фаза еволюції: STABLE/CYCLIC/CHAOTIC/META">
+      <span class="label">Ω:</span> <span id="omegaLabel" class="omega-badge omega-meta">META</span>
+    </span>
+    <span class="fps-counter" id="fps">FPS: --</span>
+    <span class="fps-counter" id="genCounter">Gen: 0</span>
+  </div>
+
+  <!-- ===== AUDIO PANEL ===== -->
+  <div class="audio-panel">
+    <h3>🎵 Аудіосинтезатор — Соніфікація еволюції</h3>
+    <div class="audio-grid">
+      <div class="control-group audio-group">
+        <label>Гучність <span class="value" id="val-vol">30%</span></label>
+        <input type="range" id="volSlider" min="0" max="100" value="30">
+      </div>
+      <div class="control-group audio-group">
+        <label>Базова частота <span class="value" id="val-baseFreq">110 Hz</span></label>
+        <input type="range" id="baseFreq" min="55" max="880" value="110" step="5">
+      </div>
+      <div class="control-group audio-group">
+        <label>Масштаб частоти <span class="value" id="val-freqScale">1.0x</span></label>
+        <input type="range" id="freqScale" min="0.1" max="3" value="1" step="0.1">
+      </div>
+      <div class="control-group audio-group">
+        <label>Розмір хорусу <span class="value" id="val-chorus">3</span></label>
+        <input type="range" id="chorus" min="1" max="8" value="3">
+      </div>
+      <div class="control-group audio-group">
+        <label>Тип синтезу</label>
+        <select id="synthType">
+          <option value="fm">FM Synthesis (багатий тембр)</option>
+          <option value="am">AM Synthesis (різкий)</option>
+          <option value="additive">Additive (органоподібний)</option>
+          <option value="drone">Drone (постійний тон)</option>
+        </select>
+      </div>
+      <div class="control-group audio-group">
+        <label>Мапінг даних</label>
+        <select id="mappingType">
+          <option value="entropy">Ентропія → тембр, Δ → висота</option>
+          <option value="population">Популяція → гучність, Правила → висота</option>
+          <option value="phase">Фаза Ω → лад, Δ → темп</option>
+        </select>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="reverbCheck" checked>
+        <label for="reverbCheck">Реверберація (просторовість)</label>
+      </div>
+      <div class="audio-status">
+        <span class="indicator" id="audioIndicator"></span>
+        <span id="audioStatus">AudioContext не ініціалізовано — натисніть 🔊</span>
+      </div>
+    </div>
+    <canvas id="audioCanvas" width="500" height="80"></canvas>
+  </div>
+
+  <!-- ===== CONTROLS PANEL ===== -->
+  <div class="controls-panel">
+    <h3>⚙️ Параметри еволюції</h3>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Початкова заповненість <span class="value" id="val-density">20%</span></label>
+        <input type="range" id="density" min="1" max="100" value="20">
+      </div>
+      <div class="control-group">
+        <label>Швидкість мутації <span class="value" id="val-mutation">0.1%</span></label>
+        <input type="range" id="mutation" min="0" max="50" value="1">
+      </div>
+      <div class="control-group">
+        <label>Адаптація мертвих <span class="value" id="val-deadAdapt">5%</span></label>
+        <input type="range" id="deadAdapt" min="0" max="100" value="5">
+      </div>
+      <div class="control-group">
+        <label>Сила мутації живих <span class="value" id="val-liveMut">±1</span></label>
+        <input type="range" id="liveMut" min="0" max="10" value="1">
+      </div>
+      <div class="control-group">
+        <label>Розмір сітки <span class="value" id="val-gridSize">80</span></label>
+        <input type="range" id="gridSize" min="40" max="120" value="80" step="10">
+      </div>
+      <div class="control-group">
+        <label>Швидкість симуляції <span class="value" id="val-speed">1x</span></label>
+        <input type="range" id="speed" min="1" max="10" value="1">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="showTrails" checked>
+        <label for="showTrails">Хвіст на фазовому просторі</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="autoScale" checked>
+        <label for="autoScale">Автомасштаб фазового простору</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-container">
+    <div class="stat-card">
+      <h3>📊 Метрики</h3>
+      <div class="metric-grid" id="vectorDisplay"></div>
+    </div>
+    <div class="stat-card">
+      <h3>🏆 Топ-5 правил (за фітнесом)</h3>
+      <table id="topRules">
+        <thead>
+          <tr><th>ID</th><th>%</th><th>Фітнес</th><th>Діти/Батьки</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="canvas-group">
+      <span>Ω-траєкторія <span class="tooltip" data-tip="Зелена: H_rule, Червона: Δrule">ⓘ</span></span>
+      <canvas id="omegaPlot" width="500" height="150"></canvas>
+    </div>
+    <div class="canvas-group">
+      <span>Фазовий простір (Δrule vs H_rule)</span>
+      <canvas id="phaseCanvas" width="200" height="200"></canvas>
+      <div class="phase-info" id="phaseInfo">Δ: 0.00 | H: 0.00</div>
+      <div class="phase-legend">
+        <span><span class="dot dot-stable"></span> STABLE</span>
+        <span><span class="dot dot-cyclic"></span> CYCLIC</span>
+        <span><span class="dot dot-chaotic"></span> CHAOTIC</span>
+        <span><span class="dot dot-meta"></span> META</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // ===== КОНФІГУРАЦІЯ =====
+      const CONFIG = {
+        get SIZE() { return parseInt(document.getElementById('gridSize').value); },
+        get DENSITY() { return parseInt(document.getElementById('density').value) / 100; },
+        get MUTATION_RATE() { return parseInt(document.getElementById('mutation').value) / 1000; },
+        get DEAD_ADAPT_RATE() { return parseInt(document.getElementById('deadAdapt').value) / 100; },
+        get LIVE_MUT_RANGE() { return parseInt(document.getElementById('liveMut').value); },
+        get SPEED() { return parseInt(document.getElementById('speed').value); },
+        get SHOW_TRAILS() { return document.getElementById('showTrails').checked; },
+        get AUTO_SCALE() { return document.getElementById('autoScale').checked; },
+        CELL_MAIN: 5,
+        HISTORY_MAX: 200,
+      };
+
+      // ===== AUDIO CONFIG =====
+      const AUDIO = {
+        ctx: null,
+        masterGain: null,
+        reverbNode: null,
+        analyser: null,
+        oscillators: [],
+        enabled: false,
+        get volume() { return parseInt(document.getElementById('volSlider').value) / 100; },
+        get baseFreq() { return parseInt(document.getElementById('baseFreq').value); },
+        get freqScale() { return parseFloat(document.getElementById('freqScale').value); },
+        get chorus() { return parseInt(document.getElementById('chorus').value); },
+        get synthType() { return document.getElementById('synthType').value; },
+        get mapping() { return document.getElementById('mappingType').value; },
+        get reverb() { return document.getElementById('reverbCheck').checked; },
+      };
+
+      // ===== DOM =====
+      const canvasMain = document.getElementById('mainCanvas');
+      const ctxMain = canvasMain.getContext('2d', { alpha: false });
+      const canvasRule = document.getElementById('ruleCanvas');
+      const ctxRule = canvasRule.getContext('2d', { alpha: false });
+      const canvasDelta = document.getElementById('deltaCanvas');
+      const ctxDelta = canvasDelta.getContext('2d', { alpha: false });
+      const canvasTrans = document.getElementById('transCanvas');
+      const ctxTrans = canvasTrans.getContext('2d', { alpha: false });
+      const canvasOmegaPlot = document.getElementById('omegaPlot');
+      const ctxOmegaPlot = canvasOmegaPlot.getContext('2d');
+      const canvasPhase = document.getElementById('phaseCanvas');
+      const ctxPhase = canvasPhase.getContext('2d');
+      const canvasAudio = document.getElementById('audioCanvas');
+      const ctxAudio = canvasAudio.getContext('2d');
+
+      const elPop = document.getElementById('pop');
+      const elOmega = document.getElementById('omegaLabel');
+      const elVector = document.getElementById('vectorDisplay');
+      const elFps = document.getElementById('fps');
+      const elGen = document.getElementById('genCounter');
+      const elPhaseInfo = document.getElementById('phaseInfo');
+      const elAudioStatus = document.getElementById('audioStatus');
+      const elAudioInd = document.getElementById('audioIndicator');
+      const tbodyRules = document.querySelector('#topRules tbody');
+
+      // ===== СТАН =====
+      let SIZE = CONFIG.SIZE;
+      let states, rules, prevRules, deltaRules;
+      let nextStates, nextRules;
+      let totalTransition;
+      let omegaHistory = [];
+      let phaseBounds = { minX: 0, maxX: 5, minY: 0, maxY: 3 };
+
+      function allocArrays() {
+        const n = SIZE * SIZE;
+        states = new Uint8Array(n);
+        rules = new Uint8Array(n);
+        prevRules = new Uint8Array(n);
+        deltaRules = new Uint8Array(n);
+        nextStates = new Uint8Array(n);
+        nextRules = new Uint8Array(n);
+        totalTransition = new Uint32Array(256 * 256);
+      }
+
+      const HUE_TABLE = new Float64Array(256);
+      for (let i = 0; i < 256; i++) HUE_TABLE[i] = (i * 360 / 256) % 360;
+
+      // ===== ІНІЦІАЛІЗАЦІЯ =====
+      function init() {
+        SIZE = CONFIG.SIZE;
+        allocArrays();
+        const density = CONFIG.DENSITY;
+        for (let i = 0; i < SIZE * SIZE; i++) {
+          states[i] = Math.random() < density ? 1 : 0;
+          const r = Math.floor(Math.random() * 256);
+          rules[i] = r;
+          prevRules[i] = r;
+          deltaRules[i] = 0;
+        }
+        totalTransition.fill(0);
+        omegaHistory = [];
+        phaseBounds = { minX: 0, maxX: 5, minY: 0, maxY: 3 };
+      }
+
+      // ===== AUDIO ENGINE =====
+      function initAudio() {
+        if (AUDIO.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        AUDIO.ctx = new AudioCtx();
+        AUDIO.masterGain = AUDIO.ctx.createGain();
+        AUDIO.masterGain.gain.value = AUDIO.volume;
+        AUDIO.masterGain.connect(AUDIO.ctx.destination);
+
+        // Analyser for visualization
+        AUDIO.analyser = AUDIO.ctx.createAnalyser();
+        AUDIO.analyser.fftSize = 256;
+        AUDIO.masterGain.connect(AUDIO.analyser);
+
+        // Reverb (convolution with impulse)
+        if (AUDIO.reverb) {
+          createReverb();
+        }
+
+        elAudioStatus.textContent = 'AudioContext активний — слухай еволюцію!';
+        elAudioInd.classList.add('active');
+      }
+
+      function createReverb() {
+        const rate = AUDIO.ctx.sampleRate;
+        const length = rate * 2; // 2 seconds
+        const impulse = AUDIO.ctx.createBuffer(2, length, rate);
+        for (let ch = 0; ch < 2; ch++) {
+          const data = impulse.getChannelData(ch);
+          for (let i = 0; i < length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+          }
+        }
+        AUDIO.reverbNode = AUDIO.ctx.createConvolver();
+        AUDIO.reverbNode.buffer = impulse;
+        AUDIO.reverbNode.connect(AUDIO.masterGain);
+      }
+
+      function stopAllOscillators() {
+        AUDIO.oscillators.forEach(osc => {
+          try { osc.stop(); } catch(e) {}
+        });
+        AUDIO.oscillators = [];
+      }
+
+      // Pentatonic scale frequencies
+      const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+      const MINOR = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22, 24];
+      const CHAOTIC_SCALE = [0, 1, 3, 4, 6, 7, 9, 10, 12];
+
+      function getScale(omega) {
+        if (omega === 'STABLE') return PENTATONIC;
+        if (omega === 'CYCLIC') return MINOR;
+        if (omega === 'CHAOTIC') return CHAOTIC_SCALE;
+        return PENTATONIC;
+      }
+
+      function noteFromRule(rule, scale, baseFreq) {
+        const noteIdx = rule % scale.length;
+        const octave = Math.floor(rule / scale.length) % 3;
+        const semitones = scale[noteIdx] + octave * 12;
+        return baseFreq * Math.pow(2, semitones / 12);
+      }
+
+      function updateAudio(pop, hRule, avgDeltaRule, uniqueRules, omega) {
+        if (!AUDIO.ctx || !AUDIO.enabled) return;
+
+        const now = AUDIO.ctx.currentTime;
+        const base = AUDIO.baseFreq * AUDIO.freqScale;
+        const scale = getScale(omega);
+        const mapping = AUDIO.mapping;
+
+        // Calculate target frequencies based on mapping
+        let freqs = [];
+        const chorus = AUDIO.chorus;
+
+        if (mapping === 'entropy') {
+          // H_rule → number of harmonics, avgDeltaRule → pitch modulation
+          const numVoices = Math.max(1, Math.min(chorus, Math.floor(hRule * 2) + 1));
+          for (let v = 0; v < numVoices; v++) {
+            const detune = (avgDeltaRule * 10) * (v - numVoices/2);
+            freqs.push(base + detune);
+          }
+        } else if (mapping === 'population') {
+          // Population density → volume, top rules → chord
+          const density = pop / (SIZE * SIZE);
+          AUDIO.masterGain.gain.setTargetAtTime(AUDIO.volume * density * 2, now, 0.1);
+          for (let v = 0; v < chorus; v++) {
+            const note = noteFromRule(Math.floor(v * 256 / chorus), scale, base);
+            freqs.push(note);
+          }
+        } else {
+          // Phase → scale, delta → tempo/pitch shift
+          const shift = avgDeltaRule * 20;
+          for (let v = 0; v < chorus; v++) {
+            const note = noteFromRule(
+              Math.floor((v * 256 / chorus) + shift) % 256,
+              scale, base
+            );
+            freqs.push(note);
+          }
+        }
+
+        // Create/update oscillators
+        stopAllOscillators();
+
+        freqs.forEach((freq, i) => {
+          const osc = AUDIO.ctx.createOscillator();
+          const gain = AUDIO.ctx.createGain();
+
+          // Synth type
+          switch (AUDIO.synthType) {
+            case 'fm':
+              osc.type = 'sine';
+              // FM modulator
+              const mod = AUDIO.ctx.createOscillator();
+              const modGain = AUDIO.ctx.createGain();
+              mod.frequency.value = freq * 0.5;
+              modGain.gain.value = freq * 0.3;
+              mod.connect(modGain);
+              modGain.connect(osc.frequency);
+              mod.start(now);
+              AUDIO.oscillators.push(mod);
+              break;
+            case 'am':
+              osc.type = 'sawtooth';
+              break;
+            case 'additive':
+              osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+              break;
+            case 'drone':
+              osc.type = 'sine';
+              break;
+          }
+
+          osc.frequency.setValueAtTime(freq, now);
+
+          // Pan for stereo width
+          const pan = AUDIO.ctx.createStereoPanner();
+          pan.pan.value = (i / (freqs.length - 1)) * 2 - 1;
+
+          // Envelope
+          const vol = AUDIO.volume / freqs.length;
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(vol, now + 0.05);
+          gain.gain.setTargetAtTime(vol * 0.7, now + 0.1, 0.5);
+
+          osc.connect(gain);
+          gain.connect(pan);
+
+          if (AUDIO.reverb && AUDIO.reverbNode) {
+            const dryGain = AUDIO.ctx.createGain();
+            dryGain.gain.value = 0.6;
+            const wetGain = AUDIO.ctx.createGain();
+            wetGain.gain.value = 0.4;
+            pan.connect(dryGain);
+            pan.connect(wetGain);
+            dryGain.connect(AUDIO.masterGain);
+            wetGain.connect(AUDIO.reverbNode);
+          } else {
+            pan.connect(AUDIO.masterGain);
+          }
+
+          osc.start(now);
+          AUDIO.oscillators.push(osc);
+        });
+      }
+
+      function drawAudioVisualizer() {
+        if (!AUDIO.analyser) return;
+        const w = canvasAudio.width;
+        const h = canvasAudio.height;
+        ctxAudio.clearRect(0, 0, w, h);
+
+        const bufferLength = AUDIO.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        AUDIO.analyser.getByteFrequencyData(dataArray);
+
+        const barWidth = w / bufferLength;
+        for (let i = 0; i < bufferLength; i++) {
+          const barHeight = (dataArray[i] / 255) * h;
+          const hue = (i / bufferLength) * 360;
+          ctxAudio.fillStyle = `hsl(${hue}, 80%, 50%)`;
+          ctxAudio.fillRect(i * barWidth, h - barHeight, barWidth - 1, barHeight);
+        }
+      }
+
+      // ===== СИМУЛЯЦІЯ =====
+      const ruleVotes = new Uint16Array(256);
+
+      function step() {
+        for (let y = 0; y < SIZE; y++) {
+          const yOff = y * SIZE;
+          const ym1 = ((y - 1 + SIZE) % SIZE) * SIZE;
+          const yp1 = ((y + 1) % SIZE) * SIZE;
+          for (let x = 0; x < SIZE; x++) {
+            const i = yOff + x;
+            const cellRule = rules[i];
+            ruleVotes.fill(0);
+            let liveNeighbors = 0;
+            const xm1 = (x - 1 + SIZE) % SIZE;
+            const xp1 = (x + 1) % SIZE;
+
+            const n0 = states[ym1 + xm1];
+            const n1 = states[ym1 + x];
+            const n2 = states[ym1 + xp1];
+            const n3 = states[yOff + xm1];
+            const n4 = states[yOff + xp1];
+            const n5 = states[yp1 + xm1];
+            const n6 = states[yp1 + x];
+            const n7 = states[yp1 + xp1];
+
+            if (n0) { liveNeighbors++; ruleVotes[rules[ym1 + xm1]]++; }
+            if (n1) { liveNeighbors++; ruleVotes[rules[ym1 + x]]++; }
+            if (n2) { liveNeighbors++; ruleVotes[rules[ym1 + xp1]]++; }
+            if (n3) { liveNeighbors++; ruleVotes[rules[yOff + xm1]]++; }
+            if (n4) { liveNeighbors++; ruleVotes[rules[yOff + xp1]]++; }
+            if (n5) { liveNeighbors++; ruleVotes[rules[yp1 + xm1]]++; }
+            if (n6) { liveNeighbors++; ruleVotes[rules[yp1 + x]]++; }
+            if (n7) { liveNeighbors++; ruleVotes[rules[yp1 + xp1]]++; }
+
+            const newState = (cellRule >> Math.min(liveNeighbors, 8)) & 1;
+
+            let maxVotes = 0;
+            let dominantRule = cellRule;
+            for (let r = 0; r < 256; r++) {
+              if (ruleVotes[r] > maxVotes) {
+                maxVotes = ruleVotes[r];
+                dominantRule = r;
+              }
+            }
+            if (maxVotes === 0) dominantRule = cellRule;
+
+            let newRule = cellRule;
+            const mutRange = CONFIG.LIVE_MUT_RANGE;
+            if (newState === 1) {
+              if (mutRange === 0) newRule = dominantRule;
+              else newRule = (dominantRule + Math.floor(Math.random() * (mutRange * 2 + 1)) - mutRange) & 255;
+            } else if (Math.random() < CONFIG.DEAD_ADAPT_RATE) {
+              newRule = dominantRule;
+            }
+            if (Math.random() < CONFIG.MUTATION_RATE) {
+              newRule = Math.floor(Math.random() * 256);
+            }
+
+            nextStates[i] = newState;
+            nextRules[i] = newRule;
+            prevRules[i] = cellRule;
+            deltaRules[i] = Math.abs(newRule - cellRule);
+            totalTransition[cellRule * 256 + newRule]++;
+          }
+        }
+        for (let i = 0; i < SIZE * SIZE; i++) {
+          states[i] = nextStates[i];
+          rules[i] = nextRules[i];
+        }
+      }
+
+      // ===== ВІЗУАЛІЗАЦІЯ =====
+      function drawMain() {
+        const w = SIZE * CONFIG.CELL_MAIN;
+        const h = SIZE * CONFIG.CELL_MAIN;
+        canvasMain.width = w; canvasMain.height = h;
+        const img = ctxMain.createImageData(w, h);
+        const d = img.data;
+        for (let y = 0; y < SIZE; y++) {
+          for (let x = 0; x < SIZE; x++) {
+            const i = y * SIZE + x;
+            if (states[i] === 0) continue;
+            const hue = HUE_TABLE[rules[i]];
+            const r = Math.round(128 + 127 * Math.cos((hue + 0) * Math.PI / 180));
+            const g = Math.round(128 + 127 * Math.cos((hue + 120) * Math.PI / 180));
+            const b = Math.round(128 + 127 * Math.cos((hue + 240) * Math.PI / 180));
+            const baseX = x * CONFIG.CELL_MAIN;
+            const baseY = y * CONFIG.CELL_MAIN;
+            for (let dy = 0; dy < CONFIG.CELL_MAIN; dy++) {
+              for (let dx = 0; dx < CONFIG.CELL_MAIN; dx++) {
+                const px = ((baseY + dy) * w + (baseX + dx)) * 4;
+                d[px] = r; d[px + 1] = g; d[px + 2] = b; d[px + 3] = 255;
+              }
+            }
+          }
+        }
+        ctxMain.putImageData(img, 0, 0);
+      }
+
+      function drawRuleSpace() {
+        const scale = 200 / SIZE;
+        const img = ctxRule.createImageData(200, 200);
+        const d = img.data; d.fill(0);
+        for (let y = 0; y < SIZE; y++) {
+          for (let x = 0; x < SIZE; x++) {
+            const r = rules[y * SIZE + x];
+            const baseX = Math.floor(x * scale);
+            const baseY = Math.floor(y * scale);
+            const sw = Math.ceil(scale);
+            const sh = Math.ceil(scale);
+            for (let dy = 0; dy < sh; dy++) {
+              for (let dx = 0; dx < sw; dx++) {
+                const px = ((baseY + dy) * 200 + (baseX + dx)) * 4;
+                if (px < d.length - 3) {
+                  d[px] = r; d[px + 1] = 255 - r; d[px + 2] = (r * 3) & 255; d[px + 3] = 255;
+                }
+              }
+            }
+          }
+        }
+        ctxRule.putImageData(img, 0, 0);
+      }
+
+      function drawDeltaMap() {
+        const scale = 200 / SIZE;
+        const img = ctxDelta.createImageData(200, 200);
+        const d = img.data; d.fill(0);
+        for (let y = 0; y < SIZE; y++) {
+          for (let x = 0; x < SIZE; x++) {
+            const delta = deltaRules[y * SIZE + x];
+            if (delta === 0) continue;
+            const intensity = Math.min(255, delta * 8);
+            const baseX = Math.floor(x * scale);
+            const baseY = Math.floor(y * scale);
+            const sw = Math.ceil(scale);
+            const sh = Math.ceil(scale);
+            for (let dy = 0; dy < sh; dy++) {
+              for (let dx = 0; dx < sw; dx++) {
+                const px = ((baseY + dy) * 200 + (baseX + dx)) * 4;
+                if (px < d.length - 3) {
+                  d[px] = intensity; d[px + 1] = intensity; d[px + 2] = intensity; d[px + 3] = 255;
+                }
+              }
+            }
+          }
+        }
+        ctxDelta.putImageData(img, 0, 0);
+      }
+
+      // ===== МЕТРИКИ =====
+      const ruleFreq = new Uint32Array(256);
+      const parentCount = new Uint32Array(256);
+      const childCount = new Uint32Array(256);
+      const fitnessArr = new Float64Array(256);
+
+      function computeMetrics() {
+        let pop = 0;
+        ruleFreq.fill(0);
+        parentCount.fill(0);
+        childCount.fill(0);
+        let sumDeltaRule = 0;
+
+        for (let i = 0; i < SIZE * SIZE; i++) {
+          if (states[i] === 1) {
+            pop++;
+            const r = rules[i];
+            const pr = prevRules[i];
+            ruleFreq[r]++;
+            childCount[r]++;
+            parentCount[pr]++;
+            sumDeltaRule += deltaRules[i];
+          }
+        }
+
+        const total = pop || 1;
+        let hRule = 0;
+        for (let i = 0; i < 256; i++) {
+          const f = ruleFreq[i];
+          if (f > 0) {
+            const p = f / total;
+            hRule -= p * Math.log2(p);
+          }
+        }
+        const avgDeltaRule = sumDeltaRule / total;
+
+        let maxFit = 0;
+        let uniqueRules = 0;
+        for (let i = 0; i < 256; i++) {
+          if (ruleFreq[i] > 0) uniqueRules++;
+          if (parentCount[i] > 0) fitnessArr[i] = childCount[i] / parentCount[i];
+          else if (childCount[i] > 0) fitnessArr[i] = 2.0;
+          else fitnessArr[i] = 0;
+          if (fitnessArr[i] > maxFit) maxFit = fitnessArr[i];
+        }
+
+        elPop.textContent = pop;
+        elGen.textContent = `Gen: ${gen}`;
+
+        elVector.innerHTML = `
+          <div class="metric-row"><span>H_rule (ентропія)</span><span>${hRule.toFixed(3)}</span></div>
+          <div class="metric-row"><span>Δrule (середнє)</span><span>${avgDeltaRule.toFixed(3)}</span></div>
+          <div class="metric-row"><span>Популяція</span><span>${pop} / ${SIZE*SIZE}</span></div>
+          <div class="metric-row"><span>Max фітнес</span><span>${maxFit.toFixed(3)}</span></div>
+          <div class="metric-row"><span>Унікальних правил</span><span>${uniqueRules}</span></div>
+          <div class="metric-row"><span>Густота</span><span>${((pop/(SIZE*SIZE))*100).toFixed(1)}%</span></div>
+        `;
+
+        let omega = 'META';
+        let omegaClass = 'omega-meta';
+        if (avgDeltaRule < 0.5 && hRule > 0.8) { omega = 'STABLE'; omegaClass = 'omega-stable'; }
+        else if (avgDeltaRule < 2.0 && hRule > 0.4) { omega = 'CYCLIC'; omegaClass = 'omega-cyclic'; }
+        else if (avgDeltaRule > 5.0) { omega = 'CHAOTIC'; omegaClass = 'omega-chaotic'; }
+        elOmega.textContent = omega;
+        elOmega.className = `omega-badge ${omegaClass}`;
+
+        const top = [];
+        for (let i = 0; i < 256; i++) {
+          if (ruleFreq[i] > 0) top.push({ id: i, f: ruleFreq[i], fit: fitnessArr[i], pc: parentCount[i], cc: childCount[i] });
+        }
+        top.sort((a, b) => b.fit - a.fit);
+        tbodyRules.innerHTML = top.slice(0, 5).map(r => `
+          <tr><td>${r.id}</td><td>${((r.f/total)*100).toFixed(1)}%</td>
+          <td style="color:${r.fit > 1 ? '#5f5' : r.fit < 1 ? '#f55' : '#ff5'}">${r.fit.toFixed(2)}</td>
+          <td>${r.cc}/${r.pc}</td></tr>
+        `).join('');
+
+        drawTransitionHeatmap();
+        omegaHistory.push({ hRule, avgDeltaRule, omega, omegaClass });
+        if (omegaHistory.length > CONFIG.HISTORY_MAX) omegaHistory.shift();
+
+        if (CONFIG.AUTO_SCALE) {
+          phaseBounds.maxX = Math.max(phaseBounds.maxX, avgDeltaRule * 1.2);
+          phaseBounds.maxY = Math.max(phaseBounds.maxY, hRule * 1.2);
+          phaseBounds.minX = Math.min(phaseBounds.minX, avgDeltaRule);
+          phaseBounds.minY = Math.min(phaseBounds.minY, hRule);
+        }
+
+        drawOmegaPlot();
+        drawPhaseSpace();
+        elPhaseInfo.textContent = `Δ: ${avgDeltaRule.toFixed(2)} | H: ${hRule.toFixed(2)} | Bounds: Δ[${phaseBounds.minX.toFixed(1)}-${phaseBounds.maxX.toFixed(1)}] H[${phaseBounds.minY.toFixed(1)}-${phaseBounds.maxY.toFixed(1)}]`;
+
+        // Update audio
+        updateAudio(pop, hRule, avgDeltaRule, uniqueRules, omega);
+      }
+
+      function drawTransitionHeatmap() {
+        const img = ctxTrans.createImageData(256, 256);
+        const d = img.data;
+        let maxVal = 1;
+        for (let i = 0; i < 256 * 256; i++) if (totalTransition[i] > maxVal) maxVal = totalTransition[i];
+        const logMax = Math.log(maxVal + 1);
+        for (let y = 0; y < 256; y++) {
+          for (let x = 0; x < 256; x++) {
+            const val = totalTransition[y * 256 + x];
+            const idx = (y * 256 + x) * 4;
+            if (val > 0) {
+              const intensity = Math.floor((Math.log(val + 1) / logMax) * 255);
+              d[idx] = 255; d[idx + 1] = 255 - intensity; d[idx + 2] = 255 - intensity; d[idx + 3] = 255;
+            } else {
+              d[idx] = 0; d[idx + 1] = 0; d[idx + 2] = 30; d[idx + 3] = 255;
+            }
+          }
+        }
+        ctxTrans.putImageData(img, 0, 0);
+      }
+
+      function drawOmegaPlot() {
+        const w = 500, h = 150;
+        ctxOmegaPlot.clearRect(0, 0, w, h);
+        if (omegaHistory.length < 2) return;
+        ctxOmegaPlot.strokeStyle = '#1a1a1a';
+        ctxOmegaPlot.lineWidth = 1;
+        for (let i = 1; i < 5; i++) {
+          const y = (h / 5) * i;
+          ctxOmegaPlot.beginPath(); ctxOmegaPlot.moveTo(0, y); ctxOmegaPlot.lineTo(w, y); ctxOmegaPlot.stroke();
+        }
+        const stepX = w / (omegaHistory.length - 1);
+        ctxOmegaPlot.beginPath(); ctxOmegaPlot.strokeStyle = '#0f0'; ctxOmegaPlot.lineWidth = 2;
+        for (let i = 0; i < omegaHistory.length; i++) {
+          const x = i * stepX, y = h - (omegaHistory[i].hRule / 3) * h;
+          i === 0 ? ctxOmegaPlot.moveTo(x, y) : ctxOmegaPlot.lineTo(x, y);
+        }
+        ctxOmegaPlot.stroke();
+        ctxOmegaPlot.beginPath(); ctxOmegaPlot.strokeStyle = '#f44'; ctxOmegaPlot.lineWidth = 2;
+        for (let i = 0; i < omegaHistory.length; i++) {
+          const x = i * stepX, y = h - (omegaHistory[i].avgDeltaRule / 10) * h;
+          i === 0 ? ctxOmegaPlot.moveTo(x, y) : ctxOmegaPlot.lineTo(x, y);
+        }
+        ctxOmegaPlot.stroke();
+        ctxOmegaPlot.fillStyle = '#0f0'; ctxOmegaPlot.fillRect(w - 80, 10, 10, 10);
+        ctxOmegaPlot.fillStyle = '#888'; ctxOmegaPlot.font = '10px monospace'; ctxOmegaPlot.fillText('H_rule', w - 65, 19);
+        ctxOmegaPlot.fillStyle = '#f44'; ctxOmegaPlot.fillRect(w - 80, 25, 10, 10);
+        ctxOmegaPlot.fillStyle = '#888'; ctxOmegaPlot.fillText('Δrule', w - 65, 34);
+      }
+
+      function drawPhaseSpace() {
+        ctxPhase.clearRect(0, 0, 200, 200);
+        if (omegaHistory.length < 2) return;
+        const auto = CONFIG.AUTO_SCALE;
+        const minX = auto ? phaseBounds.minX : 0;
+        const maxX = auto ? phaseBounds.maxX : 5;
+        const minY = auto ? phaseBounds.minY : 0;
+        const maxY = auto ? phaseBounds.maxY : 3;
+        const rangeX = maxX - minX || 1;
+        const rangeY = maxY - minY || 1;
+
+        ctxPhase.strokeStyle = '#333'; ctxPhase.lineWidth = 1;
+        ctxPhase.beginPath(); ctxPhase.moveTo(0, 200); ctxPhase.lineTo(200, 200);
+        ctxPhase.moveTo(0, 0); ctxPhase.lineTo(0, 200); ctxPhase.stroke();
+
+        ctxPhase.fillStyle = 'rgba(85,255,85,0.08)';
+        const sX1 = ((0 - minX) / rangeX) * 200;
+        const sX2 = ((0.5 - minX) / rangeX) * 200;
+        const sY1 = 200 - ((0.8 - minY) / rangeY) * 200;
+        const sY2 = 200 - ((maxY - minY) / rangeY) * 200;
+        ctxPhase.fillRect(sX1, sY2, sX2 - sX1, sY1 - sY2);
+
+        ctxPhase.fillStyle = 'rgba(255,255,85,0.08)';
+        const cX1 = ((0 - minX) / rangeX) * 200;
+        const cX2 = ((2.0 - minX) / rangeX) * 200;
+        const cY1 = 200 - ((0.4 - minY) / rangeY) * 200;
+        const cY2 = 200 - ((0.8 - minY) / rangeY) * 200;
+        ctxPhase.fillRect(cX1, cY2, cX2 - cX1, cY1 - cY2);
+
+        ctxPhase.fillStyle = 'rgba(255,85,85,0.08)';
+        const hX1 = ((5.0 - minX) / rangeX) * 200;
+        ctxPhase.fillRect(hX1, 0, 200 - hX1, 200);
+
+        const trails = CONFIG.SHOW_TRAILS;
+        const startIdx = trails ? 0 : Math.max(0, omegaHistory.length - 20);
+        for (let i = startIdx + 1; i < omegaHistory.length; i++) {
+          const prev = omegaHistory[i - 1], cur = omegaHistory[i];
+          const x1 = ((prev.avgDeltaRule - minX) / rangeX) * 200;
+          const y1 = 200 - ((prev.hRule - minY) / rangeY) * 200;
+          const x2 = ((cur.avgDeltaRule - minX) / rangeX) * 200;
+          const y2 = 200 - ((cur.hRule - minY) / rangeY) * 200;
+          const alpha = trails ? 0.3 + (i / omegaHistory.length) * 0.7 : 1;
+          ctxPhase.beginPath(); ctxPhase.strokeStyle = `rgba(136,136,255,${alpha})`; ctxPhase.lineWidth = 1.5;
+          ctxPhase.moveTo(Math.max(0, Math.min(200, x1)), Math.max(0, Math.min(200, y1)));
+          ctxPhase.lineTo(Math.max(0, Math.min(200, x2)), Math.max(0, Math.min(200, y2)));
+          ctxPhase.stroke();
+        }
+
+        const last = omegaHistory[omegaHistory.length - 1];
+        const lx = ((last.avgDeltaRule - minX) / rangeX) * 200;
+        const ly = 200 - ((last.hRule - minY) / rangeY) * 200;
+        const colorMap = { 'omega-stable': '#5f5', 'omega-cyclic': '#ff5', 'omega-chaotic': '#f55', 'omega-meta': '#aaf' };
+        ctxPhase.fillStyle = colorMap[last.omegaClass] || '#fff';
+        ctxPhase.beginPath(); ctxPhase.arc(Math.max(0, Math.min(200, lx)), Math.max(0, Math.min(200, ly)), 4, 0, Math.PI * 2); ctxPhase.fill();
+        ctxPhase.strokeStyle = '#fff'; ctxPhase.lineWidth = 1; ctxPhase.stroke();
+
+        ctxPhase.fillStyle = '#666'; ctxPhase.font = '9px monospace';
+        ctxPhase.fillText(`Δ:${minX.toFixed(1)}`, 2, 198);
+        ctxPhase.fillText(`Δ:${maxX.toFixed(1)}`, 160, 198);
+        ctxPhase.fillText(`H:${maxY.toFixed(1)}`, 2, 10);
+        ctxPhase.fillText(`H:${minY.toFixed(1)}`, 2, 190);
+      }
+
+      // ===== FPS =====
+      let lastTime = performance.now();
+      let frameCount = 0;
+      function updateFps() {
+        const now = performance.now();
+        frameCount++;
+        if (now - lastTime >= 1000) {
+          elFps.textContent = `FPS: ${Math.round((frameCount * 1000) / (now - lastTime))}`;
+          frameCount = 0; lastTime = now;
+        }
+      }
+
+      // ===== ГОЛОВНИЙ ЦИКЛ =====
+      let running = true;
+      let gen = 0;
+
+      function loop() {
+        if (running) {
+          const speed = CONFIG.SPEED;
+          for (let s = 0; s < speed; s++) { step(); gen++; }
+          if (gen % 3 === 0) {
+            drawMain(); drawRuleSpace(); drawDeltaMap(); computeMetrics();
+          }
+        }
+        drawAudioVisualizer();
+        updateFps();
+        requestAnimationFrame(loop);
+      }
+
+      function reset() {
+        init(); gen = 0;
+        if (AUDIO.ctx) stopAllOscillators();
+        drawMain(); drawRuleSpace(); drawDeltaMap(); computeMetrics();
+      }
+
+      function singleStep() {
+        if (running) { running = false; document.getElementById('playBtn').textContent = '▶ Старт'; }
+        step(); gen++;
+        drawMain(); drawRuleSpace(); drawDeltaMap(); computeMetrics();
+      }
+
+      // ===== EVENT LISTENERS =====
+      document.getElementById('playBtn').onclick = function() {
+        running = !running;
+        this.textContent = running ? '⏸ Пауза' : '▶ Старт';
+      };
+      document.getElementById('resetBtn').onclick = reset;
+      document.getElementById('stepBtn').onclick = singleStep;
+
+      document.getElementById('audioBtn').onclick = function() {
+        if (!AUDIO.ctx) initAudio();
+        AUDIO.enabled = !AUDIO.enabled;
+        this.textContent = AUDIO.enabled ? '🔊 Аудіо ON' : '🔊 Аудіо OFF';
+        this.classList.toggle('active', AUDIO.enabled);
+        if (!AUDIO.enabled) stopAllOscillators();
+      };
+
+      // Sliders
+      const sliders = {
+        'density': 'val-density', 'mutation': 'val-mutation', 'deadAdapt': 'val-deadAdapt',
+        'liveMut': 'val-liveMut', 'gridSize': 'val-gridSize', 'speed': 'val-speed',
+        'volSlider': 'val-vol', 'baseFreq': 'val-baseFreq', 'freqScale': 'val-freqScale', 'chorus': 'val-chorus'
+      };
+      for (const [id, valId] of Object.entries(sliders)) {
+        const el = document.getElementById(id);
+        const valEl = document.getElementById(valId);
+        if (!el || !valEl) continue;
+        el.oninput = function() {
+          let text = this.value;
+          if (id === 'density') text += '%';
+          else if (id === 'mutation') text = (this.value / 10).toFixed(1) + '%';
+          else if (id === 'deadAdapt') text += '%';
+          else if (id === 'liveMut') text = '±' + this.value;
+          else if (id === 'speed') text += 'x';
+          else if (id === 'volSlider') text += '%';
+          else if (id === 'baseFreq') text += ' Hz';
+          else if (id === 'freqScale') text += 'x';
+          valEl.textContent = text;
+        };
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') { e.preventDefault(); document.getElementById('playBtn').click(); }
+        else if (e.code === 'KeyR') document.getElementById('resetBtn').click();
+        else if (e.code === 'ArrowRight') { e.preventDefault(); singleStep(); }
+        else if (e.code === 'KeyA') document.getElementById('audioBtn').click();
+      });
+
+      init();
+      loop();
+    })();
+  </script>
+</body>
+</html>
